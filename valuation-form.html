@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIB Asset Valuation Intake</title>
+    <!-- Vue.js for reactive form state and repeating blocks -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary: #111;
+            --primary-hover: #333;
+            --bg: #f8fafc;
+            --card-bg: #fff;
+            --border: #e2e8f0;
+            --text: #333;
+            --text-light: #64748b;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        [v-cloak] { display: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background: var(--bg);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        header p { opacity: 0.9; }
+
+        .form-content { padding: 2rem; }
+
+        .section-header {
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+            margin: 2.5rem 0 1.5rem;
+            color: var(--primary);
+        }
+
+        .section-header:first-child { margin-top: 0; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group > label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .repeating-block {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .block-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        input[type="date"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.1);
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .radio-option input[type="radio"],
+        .checkbox-option input[type="checkbox"] {
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 1rem;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--text);
+        }
+        .btn-secondary:hover { background: #cbd5e1; }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--error);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        .btn-danger:hover { text-decoration: underline; }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .conditional-field {
+            margin-top: 1rem;
+            padding-left: 1.5rem;
+            border-left: 2px solid var(--border);
+        }
+
+        .currency-input {
+            position: relative;
+        }
+        .currency-input::before {
+            content: "$";
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        .currency-input input {
+            padding-left: 1.75rem;
+        }
+
+        .percent-input {
+            position: relative;
+        }
+        .percent-input::after {
+            content: "%";
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        .percent-input input {
+            padding-right: 1.75rem;
+        }
+
+        .status-message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .status-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- IMPORTANT: INSTRUCTIONS FOR DEPLOYMENT -->
+<!--
+  1. Replace the WEBHOOK_URL value below with your actual N8N webhook URL.
+  2. Upload this file to Vercel (or any static hosting provider).
+-->
+
+<div id="app" class="container" v-cloak>
+    <header>
+        <h1>Brokerage Asset Valuation</h1>
+        <p>Intake Questionnaire</p>
+    </header>
+
+    <div class="form-content">
+        <form @submit.prevent="submitForm" v-if="!submitted">
+
+            <!-- INTRO SECTION -->
+            <div class="section-header">Basic Information</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Your Name <span style="color:red">*</span></label>
+                    <input type="text" v-model="form.submission.full_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Your Email <span style="color:red">*</span></label>
+                    <input type="email" v-model="form.submission.email" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Date <span style="color:red">*</span></label>
+                    <input type="date" v-model="form.submission.questionnaire_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Do you have a website connected to your Facebook page? <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" v-model="form.submission.has_website" value="Yes" required> Yes
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" v-model="form.submission.has_website" value="No" required> No
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 1: FACEBOOK PAGES -->
+            <div class="section-header">Section 1: Facebook Pages</div>
+
+            <div v-for="(page, index) in form.pages" :key="'page-'+index" class="repeating-block">
+                <div class="block-title">
+                    Facebook Page {{ index + 1 }}
+                    <button type="button" class="btn btn-danger" @click="removePage(index)" v-if="form.pages.length > 1">Remove</button>
+                </div>
+
+                <div class="form-group">
+                    <label>1. Facebook Page Link <span style="color:red">*</span></label>
+                    <input type="url" v-model="page.facebook_page_url" placeholder="https://facebook.com/..." required>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>2. Followers <span style="color:red">*</span></label>
+                        <input type="number" v-model.number="page.followers" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>3a. USA % of Audience <span style="color:red">*</span></label>
+                        <div class="percent-input">
+                            <input type="number" v-model.number="page.usa_percent" min="0" max="100" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>3b. Other English-speaking countries % (UK/Canada/Australia combined)</label>
+                    <div class="percent-input" style="max-width: 200px">
+                        <input type="number" v-model.number="page.other_tier1_percent" min="0" max="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>4. Content Monetization status <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" v-model="page.cm_status" value="Approved AND earning" required> Yes, approved AND currently earning money from it</label>
+                        <label class="radio-option"><input type="radio" v-model="page.cm_status" value="Approved but NOT earning yet" required> Yes, approved but NOT earning money yet</label>
+                        <label class="radio-option"><input type="radio" v-model="page.cm_status" value="Not approved" required> No, not approved</label>
+                        <label class="radio-option"><input type="radio" v-model="page.cm_status" value="Not sure" required> I'm not sure</label>
+                    </div>
+
+                    <div class="conditional-field" v-if="page.cm_status === 'Approved AND earning'">
+                        <label>5. Avg CM Earnings Per Month <span style="color:red">*</span></label>
+                        <div class="currency-input" style="max-width: 200px">
+                            <input type="number" v-model.number="page.cm_earnings_per_month" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>6. Page niche/topic <span style="color:red">*</span></label>
+                        <input type="text" v-model="page.page_niche" required>
+                        <div class="help-text">Describe in your own words</div>
+                    </div>
+                    <div class="form-group">
+                        <label>6b. Page Niche Category <span style="color:red">*</span></label>
+                        <select v-model="page.page_niche_category" required>
+                            <option disabled value="">Select best fit...</option>
+                            <option v-for="cat in nicheCategories" :value="cat">{{ cat }}</option>
+                        </select>
+                        <div class="help-text">Which standard category best fits?</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>7. Recent performance trend <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" v-model="page.recent_performance_trend" value="Growing" required> Growing -- reach and engagement are going up</label>
+                        <label class="radio-option"><input type="radio" v-model="page.recent_performance_trend" value="Steady" required> Steady -- performance has been consistent</label>
+                        <label class="radio-option"><input type="radio" v-model="page.recent_performance_trend" value="Up and down" required> Up and down -- some good weeks, some bad, hard to predict</label>
+                        <label class="radio-option"><input type="radio" v-model="page.recent_performance_trend" value="Declining" required> Declining -- things have been dropping off</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>8a. Active violations or restrictions? <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" v-model="page.active_violations" value="No - clean" required> No, my page is clean</label>
+                        <label class="radio-option"><input type="radio" v-model="page.active_violations" value="Yes" required> Yes (please describe below)</label>
+                    </div>
+
+                    <div class="conditional-field" v-if="page.active_violations === 'Yes'">
+                        <label>8b. Describe violation <span style="color:red">*</span></label>
+                        <textarea v-model="page.violation_description" rows="3" required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>9. Payout Settings status <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" v-model="page.payout_settings_status" value="Fully configured and verified" required> Yes, fully configured and verified</label>
+                        <label class="radio-option"><input type="radio" v-model="page.payout_settings_status" value="Partially set up" required> Partially set up (started but not finished)</label>
+                        <label class="radio-option"><input type="radio" v-model="page.payout_settings_status" value="Not set up yet" required> No, not set up yet</label>
+                        <label class="radio-option"><input type="radio" v-model="page.payout_settings_status" value="Don't know" required> I don't know</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>10. Page Suspended or Banned from Earning <span style="color:red">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-option"><input type="radio" v-model="page.suspended_or_banned" value="No" required> No</label>
+                        <label class="radio-option"><input type="radio" v-model="page.suspended_or_banned" value="Yes" required> Yes</label>
+                        <label class="radio-option"><input type="radio" v-model="page.suspended_or_banned" value="Not sure" required> I'm not sure</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary" @click="addPage">+ Add another page</button>
+
+            <!-- SECTION 2: WEBSITES (Conditional) -->
+            <template v-if="form.submission.has_website === 'Yes'">
+                <div class="section-header">Section 2: Websites</div>
+
+                <div v-for="(site, index) in form.websites" :key="'site-'+index" class="repeating-block">
+                    <div class="block-title">
+                        Website {{ index + 1 }}
+                        <button type="button" class="btn btn-danger" @click="removeWebsite(index)" v-if="form.websites.length > 1">Remove</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>11. Website URL <span style="color:red">*</span></label>
+                        <input type="url" v-model="site.website_url" placeholder="https://..." required>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>12. Monthly Ad Revenue <span style="color:red">*</span></label>
+                            <div class="currency-input">
+                                <input type="number" v-model.number="site.monthly_ad_revenue" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>13. RPM (Revenue Per Mille)</label>
+                            <div class="currency-input" style="margin-bottom: 0.5rem;">
+                                <input type="number" v-model.number="site.rpm" min="0" step="0.01" :disabled="site.rpm_unknown">
+                            </div>
+                            <label class="checkbox-option">
+                                <input type="checkbox" v-model="site.rpm_unknown"> I'm not sure
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>14. Ad Network <span style="color:red">*</span></label>
+                        <div class="radio-group">
+                            <label class="radio-option" v-for="net in adNetworks" :key="net">
+                                <input type="radio" v-model="site.ad_network" :value="net" required> {{ net }}
+                            </label>
+                        </div>
+
+                        <div class="conditional-field" v-if="site.ad_network === 'Other'">
+                            <label>Please specify <span style="color:red">*</span></label>
+                            <input type="text" v-model="site.ad_network_other" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>15. Traffic Sources %</label>
+                        <label class="checkbox-option" style="margin-bottom: 1rem;">
+                            <input type="checkbox" v-model="site.analytics_unavailable"> I don't have access to analytics
+                        </label>
+
+                        <div class="grid-2" v-if="!site.analytics_unavailable">
+                            <div>
+                                <label class="help-text">Facebook</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_facebook_percent" min="0" max="100"></div>
+                            </div>
+                            <div>
+                                <label class="help-text">Google Search</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_google_percent" min="0" max="100"></div>
+                            </div>
+                            <div>
+                                <label class="help-text">Pinterest</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_pinterest_percent" min="0" max="100"></div>
+                            </div>
+                            <div>
+                                <label class="help-text">Email</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_email_percent" min="0" max="100"></div>
+                            </div>
+                            <div>
+                                <label class="help-text">AI Platforms</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_ai_percent" min="0" max="100"></div>
+                            </div>
+                            <div>
+                                <label class="help-text">Other</label>
+                                <div class="percent-input"><input type="number" v-model.number="site.traffic_other_percent" min="0" max="100"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>16. Revenue Streams <span style="color:red">*</span></label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option" v-for="stream in revenueStreamsList" :key="stream">
+                                <input type="checkbox" v-model="site.revenue_streams" :value="stream"> {{ stream }}
+                            </label>
+                        </div>
+                        <!-- Custom required validation for checkbox group handled in submit -->
+
+                        <div class="conditional-field" v-if="site.revenue_streams.includes('Other')">
+                            <label>Please specify <span style="color:red">*</span></label>
+                            <input type="text" v-model="site.revenue_streams_other" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>17. Content Creation Method <span style="color:red">*</span></label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" v-model="site.content_creation_method" value="Mostly written by people" required> Mostly written by people</label>
+                            <label class="radio-option"><input type="radio" v-model="site.content_creation_method" value="Mix of human and AI" required> Mix of human and AI</label>
+                            <label class="radio-option"><input type="radio" v-model="site.content_creation_method" value="Mostly or entirely AI-generated" required> Mostly or entirely AI-generated</label>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>18. Website Topic <span style="color:red">*</span></label>
+                            <select v-model="site.website_topic" required>
+                                <option disabled value="">Select...</option>
+                                <option v-for="topic in webTopics" :value="topic">{{ topic }}</option>
+                            </select>
+
+                            <div class="conditional-field" v-if="site.website_topic === 'Other'" style="padding-left:0; border:none; margin-top:0.5rem;">
+                                <input type="text" v-model="site.website_topic_other" placeholder="Please specify" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>18b. Web Niche Category <span style="color:red">*</span></label>
+                            <select v-model="site.web_niche_category" required>
+                                <option disabled value="">Select best fit...</option>
+                                <option v-for="cat in nicheCategories" :value="cat">{{ cat }}</option>
+                            </select>
+                            <div class="help-text">Which standard category best fits?</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>19. Website Performance Trend <span style="color:red">*</span></label>
+                        <div class="radio-group">
+                            <label class="radio-option"><input type="radio" v-model="site.website_performance_trend" value="Growing" required> Growing</label>
+                            <label class="radio-option"><input type="radio" v-model="site.website_performance_trend" value="Steady" required> Steady</label>
+                            <label class="radio-option"><input type="radio" v-model="site.website_performance_trend" value="Up and down" required> Up and down</label>
+                            <label class="radio-option"><input type="radio" v-model="site.website_performance_trend" value="Declining" required> Declining</label>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>20a. Active Penalties <span style="color:red">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-option"><input type="radio" v-model="site.active_penalties" value="No - clean" required> No - clean</label>
+                                <label class="radio-option"><input type="radio" v-model="site.active_penalties" value="Yes" required> Yes</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>21. Monthly Visitors <span style="color:red">*</span></label>
+                            <input type="number" v-model.number="site.monthly_visitors" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group conditional-field" v-if="site.active_penalties === 'Yes'" style="margin-top: 0">
+                        <label>20b. Describe penalty <span style="color:red">*</span></label>
+                        <textarea v-model="site.penalty_description" rows="3" required></textarea>
+                    </div>
+
+                </div>
+
+                <button type="button" class="btn btn-secondary" @click="addWebsite">+ Add another website</button>
+            </template>
+
+            <!-- SECTION 3: COMBINED REVENUE -->
+            <div class="section-header">Section 3: Combined Revenue</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>22. Total Monthly Revenue Combined <span style="color:red">*</span></label>
+                    <div class="currency-input">
+                        <input type="number" v-model.number="form.submission.total_monthly_revenue_combined" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>23. Monthly Revenue Goal <span style="color:red">*</span></label>
+                    <div class="currency-input">
+                        <input type="number" v-model.number="form.submission.monthly_revenue_goal" min="0" step="0.01" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: ANYTHING ELSE -->
+            <div class="section-header">Section 4: Anything Else</div>
+            <div class="form-group">
+                <label>Anything else we should know</label>
+                <textarea v-model="form.submission.anything_else" rows="4"></textarea>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                    {{ submitting ? 'Submitting...' : 'Submit Valuation Form' }}
+                </button>
+            </div>
+
+            <div v-if="submitError" class="status-message status-error">
+                {{ submitError }}
+            </div>
+
+        </form>
+
+        <div v-else class="status-message status-success" style="padding: 3rem 2rem;">
+            <h2>Submission Successful!</h2>
+            <p style="margin-top: 1rem;">Thank you for submitting your details. We have received your information and will review it shortly.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- DEPLOYMENT CONFIGURATION ---
+    // The webhook URL to send the data to.
+    const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
+    // --------------------------------
+
+    const { createApp, reactive, ref } = Vue;
+
+    const createEmptyPage = () => ({
+        facebook_page_url: '',
+        followers: null,
+        usa_percent: null,
+        other_tier1_percent: null,
+        cm_status: '',
+        cm_earnings_per_month: null,
+        page_niche: '',
+        page_niche_category: '',
+        recent_performance_trend: '',
+        active_violations: '',
+        violation_description: '',
+        payout_settings_status: '',
+        suspended_or_banned: ''
+    });
+
+    const createEmptyWebsite = () => ({
+        website_url: '',
+        monthly_ad_revenue: null,
+        rpm: null,
+        rpm_unknown: false,
+        ad_network: '',
+        ad_network_other: '',
+        traffic_facebook_percent: null,
+        traffic_google_percent: null,
+        traffic_pinterest_percent: null,
+        traffic_email_percent: null,
+        traffic_ai_percent: null,
+        traffic_other_percent: null,
+        analytics_unavailable: false,
+        revenue_streams: [],
+        revenue_streams_other: '',
+        content_creation_method: '',
+        website_topic: '',
+        website_topic_other: '',
+        web_niche_category: '',
+        website_performance_trend: '',
+        active_penalties: '',
+        penalty_description: '',
+        monthly_visitors: null
+    });
+
+    createApp({
+        setup() {
+            const getTodayDate = () => {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            };
+
+            const form = reactive({
+                submission: {
+                    full_name: '',
+                    email: '',
+                    questionnaire_date: getTodayDate(),
+                    has_website: '',
+                    total_monthly_revenue_combined: null,
+                    monthly_revenue_goal: null,
+                    anything_else: ''
+                },
+                pages: [createEmptyPage()],
+                websites: [createEmptyWebsite()]
+            });
+
+            const submitting = ref(false);
+            const submitted = ref(false);
+            const submitError = ref('');
+
+            // Constants
+            const nicheCategories = [
+                'Politics/News/Finance', 'Pets/Animals', 'Finance/Legal/Insurance',
+                'Health', 'Business', 'Tech', 'Home+Garden', 'Travel', 'Food',
+                'Entertainment', 'Other'
+            ];
+
+            const adNetworks = [
+                'Raptive (formerly AdThrive)', 'Mediavine', 'Ezoic',
+                'Journey by Mediavine', 'Google AdSense', 'Applied but not approved',
+                'No ads on website', 'Other'
+            ];
+
+            const revenueStreamsList = [
+                'Display ads', 'Affiliate links', 'Selling products',
+                'Sponsored posts', 'Subscriptions or memberships', 'Other'
+            ];
+
+            const webTopics = [
+                'Finance/legal/insurance', 'Health and wellness', 'Business and entrepreneurship',
+                'Technology', 'Home and garden', 'Travel', 'Food and recipes',
+                'Entertainment/celebrity/pop culture', 'Other'
+            ];
+
+            // Methods
+            const addPage = () => form.pages.push(createEmptyPage());
+            const removePage = (index) => form.pages.splice(index, 1);
+            const addWebsite = () => form.websites.push(createEmptyWebsite());
+            const removeWebsite = (index) => form.websites.splice(index, 1);
+
+            const validateForm = () => {
+                // Check if websites are required but missing
+                if (form.submission.has_website === 'Yes' && form.websites.length === 0) {
+                    submitError.value = "Please add at least one website.";
+                    return false;
+                }
+
+                // Validate multiple checkbox groups
+                if (form.submission.has_website === 'Yes') {
+                    for (let i=0; i<form.websites.length; i++) {
+                        if (form.websites[i].revenue_streams.length === 0) {
+                            submitError.value = `Please select at least one Revenue Stream for Website ${i+1}.`;
+                            return false;
+                        }
+                    }
+                }
+
+                submitError.value = '';
+                return true;
+            };
+
+            const cleanPayload = () => {
+                // Deep copy form to avoid changing UI
+                const payload = JSON.parse(JSON.stringify(form));
+
+                // Handle website visibility logic
+                if (payload.submission.has_website === 'No') {
+                    payload.websites = [];
+                }
+
+                // Clean empty optional strings and numbers
+                const cleanObj = (obj) => {
+                    Object.keys(obj).forEach(key => {
+                        if (obj[key] === '' && typeof obj[key] === 'string') {
+                            // Don't delete, keep as empty string if it's string type
+                        } else if (obj[key] === null) {
+                            delete obj[key]; // remove nulls for N8N optional numbers
+                        }
+                    });
+                };
+
+                // Clean arrays
+                payload.pages.forEach(p => cleanObj(p));
+                payload.websites.forEach(w => cleanObj(w));
+
+                return payload;
+            };
+
+            const submitForm = async () => {
+                if (!validateForm()) return;
+
+                if (WEBHOOK_URL === 'YOUR_N8N_WEBHOOK_URL_HERE' || !WEBHOOK_URL) {
+                    submitError.value = "Configuration Error: Webhook URL is missing. Please contact support.";
+                    return;
+                }
+
+                submitting.value = true;
+                submitError.value = '';
+
+                try {
+                    const payload = cleanPayload();
+
+                    const response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        submitted.value = true;
+                        // Scroll to top
+                        window.scrollTo(0, 0);
+                    } else {
+                        submitError.value = "There was a problem submitting your form. Please try again.";
+                    }
+                } catch (err) {
+                    console.error(err);
+                    submitError.value = "Network error. Please check your connection and try again.";
+                } finally {
+                    submitting.value = false;
+                }
+            };
+
+            return {
+                form,
+                submitting,
+                submitted,
+                submitError,
+                nicheCategories,
+                adNetworks,
+                revenueStreamsList,
+                webTopics,
+                addPage,
+                removePage,
+                addWebsite,
+                removeWebsite,
+                submitForm
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
