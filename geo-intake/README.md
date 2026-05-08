@@ -9,9 +9,28 @@ This directory contains the standalone `geo-intake.html` file designed to be hos
 
 ---
 
-## Step 1: Configure N8N
+## Step 1: How to View the Form Locally (Testing Before Deployment)
 
-Before deploying the form, you must set up the N8N workflow to catch the data.
+If you double-click `geo-intake.html` to open it in your browser, you will likely see a message saying: **"This intake link has expired or is invalid."**
+
+**This is normal and expected.** The form is designed with a security check to prevent abuse. It will *only* load if it detects a valid `token` and `email` in the URL (which will eventually be provided by the ConvertKit email after a Stripe purchase).
+
+To view and test the form on your computer:
+
+1. Open `geo-intake.html` in your web browser. The URL in your address bar will look something like this:
+   `file:///Users/yourname/Downloads/geo-intake/geo-intake.html`
+2. **Add dummy parameters to the end of the URL.** Click into your browser's address bar and append `?token=test_token_123&email=test@example.com` to the very end.
+3. Your new URL should look like this:
+   `file:///Users/yourname/Downloads/geo-intake/geo-intake.html?token=test_token_123&email=test@example.com`
+4. Press **Enter** to reload the page. The form will now bypass the security check and display normally!
+
+*(Note: Remember the Standing Protocol: Never test against real buyer email addresses).*
+
+---
+
+## Step 2: Configure N8N
+
+Before deploying the form to production, you must set up the N8N workflow to catch the data.
 
 1. Create a new N8N workflow (or edit your existing GEO Intake workflow).
 2. Add a **Webhook** node as the trigger.
@@ -44,7 +63,7 @@ Before deploying the form, you must set up the N8N workflow to catch the data.
 
 ---
 
-## Step 2: Update the Form Code
+## Step 3: Update the Form Code
 
 1. Open `geo-intake.html` in your code editor.
 2. Scroll down to the `<script>` section (around line 250).
@@ -52,12 +71,12 @@ Before deploying the form, you must set up the N8N workflow to catch the data.
    ```javascript
    const WEBHOOK_URL = 'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake';
    ```
-4. Replace `'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake'` with the actual **Production Webhook URL** you copied from N8N in Step 1.
+4. Replace `'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake'` with the actual **Production Webhook URL** you copied from N8N in Step 2.
 5. Save the file.
 
 ---
 
-## Step 3: Deploy to Vercel
+## Step 4: Deploy to Vercel
 
 1. Commit `geo-intake.html` to your GitHub repository (or use the Vercel CLI).
 2. Connect the repository to Vercel.
@@ -65,15 +84,13 @@ Before deploying the form, you must set up the N8N workflow to catch the data.
 
 ---
 
-## Step 4: Testing
+## Step 5: Final Production Testing
 
-1. Generate a test URL with a valid token and email.
-   - Format: `https://your-vercel-domain.com/geo-intake.html?token=test_token_123&email=test@example.com&name=TestUser`
-   - *(Note: Remember the Standing Protocol: Never test against real buyer email addresses).*
-2. Open the URL. The form should load (it will show "Invalid link" if `token` and `email` are missing from the URL).
-3. Fill out the form and click Submit.
-4. Verify:
-   - The frontend shows the success screen ("Thank you. Your audit is running.").
-   - Check N8N executions to ensure the webhook received the payload successfully.
-   - Check Airtable to confirm the record updated and Status flipped to "Ready for Audit".
-   - Check ConvertKit to ensure the dummy test email received the tag.
+Once deployed to Vercel, generate a test URL pointing to your live Vercel domain with a valid token and email.
+- Format: `https://your-vercel-domain.com/geo-intake.html?token=test_token_123&email=test@example.com&name=TestUser`
+
+Fill out the form and verify:
+- The frontend shows the success screen.
+- N8N receives the payload.
+- Airtable updates to "Ready for Audit".
+- ConvertKit applies the tag.
