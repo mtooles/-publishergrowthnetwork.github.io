@@ -223,12 +223,6 @@
 </head>
 <body>
 
-<!-- IMPORTANT: INSTRUCTIONS FOR DEPLOYMENT -->
-<!--
-  1. Replace the WEBHOOK_URL value below with your actual N8N webhook URL.
-  2. Upload this file to Vercel (or any static hosting provider).
--->
-
 <div id="app" class="container" v-cloak>
     <header>
         <h1>Brokerage Asset Valuation</h1>
@@ -586,11 +580,6 @@
 </div>
 
 <script>
-    // --- DEPLOYMENT CONFIGURATION ---
-    // The webhook URL to send the data to.
-    const WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
-    // --------------------------------
-
     const { createApp, reactive, ref } = Vue;
 
     const createEmptyPage = () => ({
@@ -741,18 +730,13 @@
             const submitForm = async () => {
                 if (!validateForm()) return;
 
-                if (WEBHOOK_URL === 'YOUR_N8N_WEBHOOK_URL_HERE' || !WEBHOOK_URL) {
-                    submitError.value = "Configuration Error: Webhook URL is missing. Please contact support.";
-                    return;
-                }
-
                 submitting.value = true;
                 submitError.value = '';
 
                 try {
                     const payload = cleanPayload();
 
-                    const response = await fetch(WEBHOOK_URL, {
+                    const response = await fetch('/api/submit', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
