@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO Intake Form - Publisher Growth Network</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#000080',
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'Helvetica', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #000080;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        .helper-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        input[type="text"], input[type="url"], textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+            font-family: Arial, sans-serif;
+        }
+        input[type="text"]:focus, input[type="url"]:focus, textarea:focus {
+            outline: none;
+            border-color: #000080;
+            box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
+        }
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: -0.25rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .btn-submit {
+            background-color: #000080;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 1rem 2rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        .btn-submit:hover:not(:disabled) {
+            background-color: #000066;
+        }
+        .btn-submit:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .checkbox-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 0.5rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.5rem;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<div id="app" class="max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-navy mb-2">GEO Intake Form</h1>
+        <p class="text-gray-600">Please provide the details below to initiate your GEO Audit.</p>
+    </div>
+
+    <div v-if="state === 'loading'" class="text-center py-20">
+        <p class="text-gray-500">Loading form...</p>
+    </div>
+
+    <div v-else-if="state === 'invalid_token'" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700">
+                    This intake link has expired or is invalid. Please contact <a href="mailto:support@publisherinabox.com" class="font-bold underline">support@publisherinabox.com</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div v-else-if="state === 'success'" class="bg-green-50 border-l-4 border-green-500 p-8 text-center rounded shadow">
+        <svg class="mx-auto h-12 w-12 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Thank you. Your audit is running.</h2>
+        <p class="text-gray-600">You'll receive your report within the expected timeline.</p>
+    </div>
+
+    <form v-else @submit.prevent="submitForm" class="space-y-6">
+
+        <!-- Section 1: About Your Brand -->
+        <div class="form-section">
+            <h2 class="section-title">Section 1: About Your Brand</h2>
+
+            <div class="mb-4">
+                <label for="clientName">Client Name *</label>
+                <div class="helper-text">Company/brand legal name</div>
+                <input type="text" id="clientName" v-model="formData.clientName" required minlength="2" maxlength="100" placeholder="Your Company LLC">
+                <span v-if="errors.clientName" class="error-message">{{ errors.clientName }}</span>
+            </div>
+
+            <div class="mb-4">
+                <label for="brandName">Brand Name *</label>
+                <div class="helper-text">Exact brand name as it should appear in queries</div>
+                <input type="text" id="brandName" v-model="formData.brandName" required minlength="2" maxlength="50" placeholder="Your Brand">
+                <span v-if="errors.brandName" class="error-message">{{ errors.brandName }}</span>
+            </div>
+
+            <div class="mb-4">
+                <label for="websiteUrl">Website URL *</label>
+                <div class="helper-text">Must include https://</div>
+                <input type="url" id="websiteUrl" v-model="formData.websiteUrl" required pattern="https://.*" placeholder="https://www.yourbrand.com">
+                <span v-if="errors.websiteUrl" class="error-message">{{ errors.websiteUrl }}</span>
+            </div>
+        </div>
+
+        <!-- Section 2: Your Business -->
+        <div class="form-section">
+            <h2 class="section-title">Section 2: Your Business</h2>
+            <p class="helper-text mb-4 italic">These details help us run the audit queries that match what your customers actually ask AI tools.</p>
+
+            <div class="mb-4">
+                <label for="industry">Industry *</label>
+                <input type="text" id="industry" v-model="formData.industry" required minlength="5" maxlength="100" placeholder="e.g., SaaS Marketing, Health & Wellness, B2B Consulting">
+                <span v-if="errors.industry" class="error-message">{{ errors.industry }}</span>
+            </div>
+
+            <div class="mb-4">
+                <label for="coreService">Core Service *</label>
+                <input type="text" id="coreService" v-model="formData.coreService" required minlength="5" maxlength="200" placeholder="e.g., Email marketing automation for ecommerce">
+                <span v-if="errors.coreService" class="error-message">{{ errors.coreService }}</span>
+            </div>
+
+            <div class="mb-4">
+                <label for="niche">Niche *</label>
+                <input type="text" id="niche" v-model="formData.niche" required minlength="5" maxlength="150" placeholder="e.g., Email marketing for Shopify stores under $10M">
+                <span v-if="errors.niche" class="error-message">{{ errors.niche }}</span>
+            </div>
+
+            <div class="mb-4">
+                <label for="mainProblem">Main Problem *</label>
+                <textarea id="mainProblem" v-model="formData.mainProblem" required minlength="10" maxlength="300" rows="3" placeholder="What's the primary problem your brand solves for customers?"></textarea>
+                <span v-if="errors.mainProblem" class="error-message">{{ errors.mainProblem }}</span>
+            </div>
+        </div>
+
+        <!-- Section 3: Competitive Landscape & Channels -->
+        <div class="form-section">
+            <h2 class="section-title">Section 3: Competitive Landscape & Channels</h2>
+
+            <div class="mb-6">
+                <label for="competitors">Top 3 Competitors *</label>
+                <textarea id="competitors" v-model="formData.competitors" required minlength="10" rows="2" placeholder="Brand 1, Brand 2, Brand 3 (comma-separated)"></textarea>
+                <span v-if="errors.competitors" class="error-message">{{ errors.competitors }}</span>
+            </div>
+
+            <div class="mb-6">
+                <label>Active Channels *</label>
+                <div class="helper-text">Select at least one</div>
+                <div class="checkbox-group checkbox-grid">
+                    <label v-for="channel in availableChannels" :key="channel">
+                        <input type="checkbox" :value="channel" v-model="formData.activeChannels">
+                        {{ channel }}
+                    </label>
+                </div>
+                <span v-if="errors.activeChannels" class="error-message mt-1">{{ errors.activeChannels }}</span>
+            </div>
+
+            <div class="mb-2">
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" v-model="formData.hasCrunchbase">
+                        We have a Crunchbase profile
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" v-model="formData.hasWikipedia">
+                        We have a Wikipedia page
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display general error if any -->
+        <div v-if="submitError" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <p class="text-sm text-red-700">{{ submitError }}</p>
+        </div>
+
+        <button type="submit" class="btn-submit" :disabled="isSubmitting">
+            <span v-if="isSubmitting" class="loader"></span>
+            {{ isSubmitting ? 'Submitting...' : 'Submit Your Intake' }}
+        </button>
+    </form>
+</div>
+
+<script>
+    const { createApp, ref, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            // Placeholder for Airtable Incoming Webhook - TEAM MEMBER MUST REPLACE THIS
+            const WEBHOOK_URL = 'https://hooks.airtable.com/workflows/v1/genericWebhook/YOUR_WEBHOOK_ID_HERE'; // REPLACE THIS WITH YOUR AIRTABLE WEBHOOK URL
+
+            const state = ref('loading'); // loading, ready, invalid_token, success
+            const isSubmitting = ref(false);
+            const submitError = ref(null);
+
+            const hiddenData = ref({
+                token: '',
+                customerEmail: '',
+                customerName: ''
+            });
+
+            const formData = ref({
+                clientName: '',
+                brandName: '',
+                websiteUrl: '',
+                industry: '',
+                coreService: '',
+                niche: '',
+                mainProblem: '',
+                competitors: '',
+                activeChannels: [],
+                hasCrunchbase: false,
+                hasWikipedia: false,
+            });
+
+            const errors = ref({});
+
+            const availableChannels = [
+                'X', 'LinkedIn', 'YouTube', 'Website', 'Newsletter',
+                'Podcast', 'Instagram', 'Facebook', 'TikTok'
+            ];
+
+            onMounted(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                const email = urlParams.get('email');
+                const name = urlParams.get('name') || '';
+
+                if (!token || !email) {
+                    state.value = 'invalid_token';
+                    return;
+                }
+
+                hiddenData.value.token = token;
+                hiddenData.value.customerEmail = email;
+                hiddenData.value.customerName = name;
+
+                state.value = 'ready';
+            });
+
+            const validateForm = () => {
+                errors.value = {};
+                let isValid = true;
+
+                if (formData.value.activeChannels.length === 0) {
+                    errors.value.activeChannels = 'Please select at least one active channel.';
+                    isValid = false;
+                }
+
+                if (!formData.value.websiteUrl.startsWith('https://')) {
+                    errors.value.websiteUrl = 'Website URL must start with https://';
+                    isValid = false;
+                }
+
+                return isValid;
+            };
+
+            const submitForm = async () => {
+                if (!validateForm()) {
+                    // Scroll to first error roughly
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                isSubmitting.value = true;
+                submitError.value = null;
+
+                // Construct payload exactly matching the requirements for N8N to parse
+                const payload = {
+                    ...formData.value,
+                    // Map arrays/booleans to formats easily digested by Airtable if needed
+                    activeChannels: formData.value.activeChannels.join(', '),
+
+                    // Hidden/System fields
+                    token: hiddenData.value.token,
+                    customerEmail: hiddenData.value.customerEmail,
+                    customerName: hiddenData.value.customerName,
+                    submissionTimestamp: new Date().toISOString()
+                };
+
+                try {
+                    const response = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        // Attempt to read error message from webhook if provided
+                        let errMsg = 'An error occurred while submitting. Please try again or contact support.';
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.message) errMsg = errorData.message;
+                            if (errorData.error === 'invalid_token' || errorData.error === 'email_mismatch') {
+                                state.value = 'invalid_token'; // Re-use the invalid token state for fatal auth errors
+                                isSubmitting.value = false;
+                                return;
+                            }
+                        } catch (e) {
+                            // Non-JSON response, ignore
+                        }
+
+                        throw new Error(errMsg);
+                    }
+
+                    // Success
+                    state.value = 'success';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    submitError.value = "Submitted — we'll be in touch shortly. (Internal note: Webhook unreachable or returned error, submission may be queued for retry depending on backend setup).";
+                } finally {
+                    isSubmitting.value = false;
+                }
+            };
+
+            return {
+                state,
+                isSubmitting,
+                formData,
+                errors,
+                submitError,
+                availableChannels,
+                submitForm
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
