@@ -282,8 +282,8 @@
 
     createApp({
         setup() {
-            // Placeholder for N8N Webhook - TEAM MEMBER MUST REPLACE THIS
-            const WEBHOOK_URL = 'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake';
+            // Placeholder for Airtable Incoming Webhook - TEAM MEMBER MUST REPLACE THIS
+            const WEBHOOK_URL = 'https://hooks.airtable.com/workflows/v1/genericWebhook/YOUR_WEBHOOK_ID_HERE'; // REPLACE THIS WITH YOUR AIRTABLE WEBHOOK URL
 
             const state = ref('loading'); // loading, ready, invalid_token, success
             const isSubmitting = ref(false);

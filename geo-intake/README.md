@@ -1,10 +1,10 @@
 # GEO Intake Form Setup Instructions
 
-This directory contains the standalone `geo-intake.html` file designed to be hosted on Vercel. It collects data for the PIB GEO Audit and submits it directly to an N8N webhook.
+This directory contains the standalone `geo-intake.html` file designed to be hosted on Vercel. It collects data for the PIB GEO Audit and submits it directly to an **Airtable Incoming Webhook**.
 
 ## Architecture
 - **Frontend:** Single-file HTML using Vue.js (via CDN) and Tailwind CSS (via CDN).
-- **Backend/Logic:** All routing, validation, Airtable updates, and ConvertKit tagging are handled by a dedicated N8N webhook.
+- **Backend/Logic:** Submitted directly to an Airtable Automation webhook.
 - **Hosting:** Vercel.
 
 ---
@@ -28,38 +28,22 @@ To view and test the form on your computer:
 
 ---
 
-## Step 2: Configure N8N
+## Step 2: Configure Airtable Automation
 
-Before deploying the form to production, you must set up the N8N workflow to catch the data.
+Before deploying the form to production, you must set up an Airtable Automation to catch the data.
 
-1. Create a new N8N workflow (or edit your existing GEO Intake workflow).
-2. Add a **Webhook** node as the trigger.
-   - Set HTTP Method to `POST`.
-   - Set Path to something like `geo-intake`.
-   - Copy the **Production URL** of this webhook.
-3. In the N8N workflow, the incoming JSON payload will contain the following keys (map these to Airtable/ConvertKit as specified in your docs):
-   - `clientName` (maps to `fldtnp3DizTc8evL3`)
-   - `brandName` (maps to `fldNbF918zi7HhY2m`)
-   - `websiteUrl` (maps to `fldmDs5EcVQfkKyXd`)
-   - `industry` (maps to `fldxKinaPg5XJzx4d`)
-   - `coreService` (maps to `fldsEzzz0ugl91WTM`)
-   - `niche` (maps to `fldQWj9So76r8a5QA`)
-   - `mainProblem` (maps to `fldbD3ZHGvhfZdsc5`)
-   - `competitors` (maps to `fldsSqq9hNXgZoNcf`)
-   - `activeChannels` (maps to `fld5AZIsSSxAeSfBE`) - *Comma-separated string*
-   - `hasCrunchbase` (Boolean)
-   - `hasWikipedia` (Boolean)
-   - `token` (String) - *Use this to verify the Stripe Order ID*
-   - `customerEmail` (String) - *Use this to update ConvertKit*
-   - `customerName` (String)
-   - `submissionTimestamp` (ISO String)
-
-4. **Add Logic to N8N:**
-   - **Validation:** Check if the `token` is valid and hasn't expired. If invalid, the workflow should ideally respond with an HTTP 400 or 401 status so the frontend shows the "Link Expired" screen.
-   - **Airtable:** Update the GEO Clients record matched by the Order ID (derived from the token). Set Status to `Ready for Audit`.
-   - **ConvertKit:** Apply the `form-completed-geo-audit` tag. Update custom fields `pib_geo_brand_name` and `pib_geo_tier`.
-
-5. **CRITICAL: Republish the N8N workflow.** (N8N changes do not take effect on the production webhook URL until activated/published).
+1. Go to your **Airtable PIB GEO base**.
+2. Click **Automations** and create a new one.
+3. For the Trigger, select **"When a webhook is received"**.
+4. Airtable will generate a unique Webhook URL (it looks like `https://hooks.airtable.com/workflows/v1/genericWebhook/...`). **Copy this URL.**
+5. To map your data, you must send a test payload. Open the form locally (following Step 1 above), fill it out with dummy data, and click Submit.
+6. In Airtable, click **Test Trigger**. Airtable will catch the dummy data, showing you the structure.
+7. Add an **Action** to your Automation:
+   - Select **"Find records"** to find the existing GEO Clients record matching the incoming `token` (Order ID).
+   - Add another Action to **"Update record"** using the Record ID found in the previous step. Map all the incoming webhook variables to their respective fields (Client Name, Brand Name, Industry, etc.).
+   - Ensure you update the Status field to `Ready for Audit`.
+8. *Note: If ConvertKit tagging is required, you must add an action script in Airtable or ensure a secondary process catches the 'Ready for Audit' status change to apply the tag.*
+9. Turn the Automation **ON**.
 
 ---
 
@@ -69,9 +53,9 @@ Before deploying the form to production, you must set up the N8N workflow to cat
 2. Scroll down to the `<script>` section (around line 250).
 3. Find the following line:
    ```javascript
-   const WEBHOOK_URL = 'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake';
+   const WEBHOOK_URL = 'https://hooks.airtable.com/workflows/v1/genericWebhook/YOUR_WEBHOOK_ID_HERE'; // REPLACE THIS WITH YOUR AIRTABLE WEBHOOK URL
    ```
-4. Replace `'https://YOUR_N8N_INSTANCE_URL/webhook/geo-intake'` with the actual **Production Webhook URL** you copied from N8N in Step 2.
+4. Replace the generic URL string with the actual **Airtable Webhook URL** you copied in Step 2.
 5. Save the file.
 
 ---
@@ -91,6 +75,4 @@ Once deployed to Vercel, generate a test URL pointing to your live Vercel domain
 
 Fill out the form and verify:
 - The frontend shows the success screen.
-- N8N receives the payload.
 - Airtable updates to "Ready for Audit".
-- ConvertKit applies the tag.
